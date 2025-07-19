@@ -31,15 +31,24 @@ jobs:
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          # Use the ECR_REGISTRY (the host part) and combine with vars.ECR_REPOSITORY and IMAGE_TAG
-          # The format should be: <registry-url>/<repository-name>:<tag>
-          docker build -t ${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG} .
-          docker push ${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG}
-          echo "Image=${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+        tags: |
+          ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ github.sha }}
+          ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
+          platforms: linux/amd64
+
+        # env:
+        #   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        #   IMAGE_TAG: ${{ github.sha }}
+        # run: |
+        #   # Use the ECR_REGISTRY (the host part) and combine with vars.ECR_REPOSITORY and IMAGE_TAG
+        #   # The format should be: <registry-url>/<repository-name>:<tag>
+        #   docker build -t ${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG} .
+        #   docker push ${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG}
+        #   echo "Image=${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
       - name: Download task definition
         run: |
@@ -51,7 +60,8 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ vars.CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.image }}
+          # image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
