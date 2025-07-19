@@ -40,16 +40,6 @@ jobs:
             ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:latest
           platforms: linux/amd64
 
-        # env:
-        #   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        #   IMAGE_TAG: ${{ github.sha }}
-        # run: |
-        #   # Use the ECR_REGISTRY (the host part) and combine with vars.ECR_REPOSITORY and IMAGE_TAG
-        #   # The format should be: <registry-url>/<repository-name>:<tag>
-        #   docker build -t ${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG} .
-        #   docker push ${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG}
-        #   echo "Image=${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${IMAGE_TAG}" >> $GITHUB_OUTPUT
-
       - name: Download task definition
         run: |
           aws ecs describe-task-definition --task-definition ${{ vars.TASK_DEF }} --query taskDefinition > task-definition.json
