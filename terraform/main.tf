@@ -1,26 +1,26 @@
 locals {
-  prefix = "hanna-dev"
+  prefix = "kael-dev"
 }
 
 data "aws_caller_identity" "current" {}
 
 data "aws_region" "current" {}
 
-data "aws_vpc" "hanna_vpc" {
+data "aws_vpc" "kael_vpc" {
   tags = {
     Name = var.vpc_name
   }
 
 }
 
-data "aws_subnets" "hanna_public" {
+data "aws_subnets" "kael_public" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.hanna_vpc.id]
+    values = [data.aws_vpc.kael_vpc.id]
   }
   filter {
     name   = "tag:Name"
-    values = ["*public*"] # Matches names like "hanna-vpc-public-ap-southeast-1a"
+    values = ["*public*"] # Matches names like "kael-vpc-public-ap-southeast-1a"
   }
 }
 
@@ -43,11 +43,11 @@ module "ecs" {
   }
 
   services = {
-    HANNA-TASKDEFINITION = { #task definition and service name -> #Change
+    kael-TASKDEFINITION = { #task definition and service name -> #Change
       cpu    = 512
       memory = 1024
       container_definitions = {
-        HANNA-ECS-CONTAINER = { #container name -> Change
+        kael-ECS-CONTAINER = { #container name -> Change
           essential = true
           image     = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${data.aws_region.current.id}.amazonaws.com/${local.prefix}-ecr:latest"
           port_mappings = [
@@ -60,7 +60,7 @@ module "ecs" {
       }
       assign_public_ip                   = true
       deployment_minimum_healthy_percent = 100
-      subnet_ids                   = flatten(data.aws_subnets.hanna_public.ids) #List of subnet IDs to use for your tasks
+      subnet_ids                   = flatten(data.aws_subnets.kael_public.ids) #List of subnet IDs to use for your tasks
       security_group_ids           = [module.ecs_sg.security_group_id] #Create a SG resource and pass it here
     }
   }
@@ -72,7 +72,7 @@ module "ecs_sg" {
 
   name = "${local.prefix}-ecs-sg"
   description = "Security group for ecs"
-  vpc_id = data.aws_vpc.hanna_vpc.id
+  vpc_id = data.aws_vpc.kael_vpc.id
 
   ingress_cidr_blocks = ["0.0.0.0/0"]
   ingress_rules = ["http-8080-tcp"]
